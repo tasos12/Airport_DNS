@@ -57,11 +57,7 @@ public class Client extends Thread{
      */
     public void read(String routeID) {
         out.println("READ " + routeID);
-        try {
-            while(!in.ready()){}
-            String reply = in.readLine();
-            System.out.println(reply);
-        } catch (IOException e) {}
+        waitReply();
     }
 
     /**
@@ -72,6 +68,34 @@ public class Client extends Thread{
      */
     public void write(String routeID, String status, String datetime) {
         out.println("WRITE " + routeID + " " + status + " " + datetime);
+        waitReply();
+    }
+
+    /**
+     * Sends a MODIFY request to the server
+     * @param routeID the ID of the route to be modified
+     * @param newRouteID the new ID of the route
+     * @param status the new status of the route
+     * @param datetime the new datetime of the route
+     */
+    public void modify(String routeID, String newRouteID, String status, String datetime) {
+        out.println("MODIFY " + routeID + " " + newRouteID + " " + status + " " + datetime);
+        waitReply();
+    }
+
+    /**
+     * Sends a DELETE request to the server
+     * @param routeID the ID of the route to be deleted
+     */
+    public void delete(String routeID) {
+        out.println("DELETE " + routeID);
+        waitReply();
+    }
+
+    /**
+     * Helper method that waits until a reply from the server is available and prints it
+     */
+    private void waitReply(){
         try {
             while(!in.ready()){}
             String reply = in.readLine();

@@ -1,6 +1,8 @@
 package com.Monk.Server;
 
 import java.util.HashMap;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * A pseudo database that stores routes temporarily
@@ -8,9 +10,14 @@ import java.util.HashMap;
 public class Database {
 
     private HashMap<String, Route> database;
+    private ReentrantReadWriteLock rwLock;
+    private Lock readLock, writeLock;
 
     public Database(){
-        database = new HashMap<String, Route>();
+        database = new HashMap<>();
+        rwLock = new ReentrantReadWriteLock(true);
+        readLock = rwLock.readLock();
+        writeLock = rwLock.writeLock();
     }
 
     /**
@@ -19,10 +26,22 @@ public class Database {
      * @return WOK if successfull WERR if not
      * @see Route
      */
-    public synchronized String addRoute(Route route) {
-        if(database.containsKey(route.getId()))
-            return Constants.WRITE_ERROR;
-        database.put(route.getId(), route);
+    public String addRoute(Route route) {
+
+        readLock.lock();
+        try {
+            if(database.containsKey(route.getId()))
+                return Constants.WRITE_ERROR;
+        } finally {
+            readLock.unlock();
+        }
+
+        writeLock.lock();
+        try {
+            database.put(route.getId(), route);
+        } finally {
+            writeLock.unlock();
+        }
         return Constants.WRITE_OK;
     }
 
@@ -32,9 +51,14 @@ public class Database {
      * @return ROK if successfull RERR if not
      * @see Route
      */
-    public synchronized String getRoute(String routeID) {
-        if(database.containsKey(routeID))
-            return Constants.READ_OK + " " + database.get(routeID).toString();
+    public String getRoute(String routeID) {
+        readLock.lock();
+        try {
+            if(database.containsKey(routeID))
+                return Constants.READ_OK + " " + database.get(routeID).toString();
+        } finally {
+            readLock.unlock();
+        }
         return Constants.READ_ERROR;
     }
 
